@@ -1,10 +1,16 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"flag"
+	"fmt"
+	"log"
 	"os"
 	"sync"
+	"time"
 
+	liteapi "github.com/liteapi-travel/go-sdk/v3"
 	"github.com/madfelps/challenge-nuitee/internal/jsonlog"
 
 	_ "github.com/lib/pq"
@@ -45,7 +51,11 @@ func main() {
 	var cfg config
 
 	flag.IntVar(&cfg.port, "port", 4000, "API server port")
-	flag.StringVar(&cfg.db.dsn, "db-dsn", "postgresql://greenlight:1234@db/greenlight?sslmode=disable", "PostgreSQL DSN")
+
+	cfg.db.dsn = os.Getenv("DATABASE_DSN")
+	if cfg.db.dsn == "" {
+		log.Fatal("Environment variable DATABASE_DSN is not set")
+	}
 
 	flag.Float64Var(&cfg.limiter.rps, "limiter-rps", 2, "Rate limiter maximum requests per second")
 	flag.IntVar(&cfg.limiter.burst, "limiter-burst", 4, "Rate limiter maximum burst")
@@ -53,22 +63,42 @@ func main() {
 
 	flag.Parse()
 
+	configuration := liteapi.NewConfiguration()
+
+	apiKey := os.Getenv("LITE_API_KEY")
+
+	if apiKey == "" {
+		log.Fatal("Environment variable LITE_API_KEY is not set")
+	}
+
+	configuration.AddDefaultHeader("X-API-KEY", apiKey)
+	apiClient := liteapi.NewAPIClient(configuration)
+
+	result, res, err := apiClient.StaticDataApi.GetCountries(context.Background()).Execute()
+
+	if err != nil {
+		fmt.Println("Error when calling GetCountries: ", err.Error())
+	}
+
+	fmt.Println("Response from GetCountries: ", res.Status)
+	fmt.Println("Result from GetCountries: ", result)
+
 	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 
-	// db, err := openDB(cfg)
-	// if err != nil {
-	// 	logger.PrintFatal(err, nil)
-	// }
-	// defer db.Close()
+	db, err := openDB(cfg)
+	if err != nil {
+		logger.PrintFatal(err, nil)
+	}
+	defer db.Close()
 
-	// logger.PrintInfo("database connection pool established with success", nil)
+	logger.PrintInfo("database connection pool established with success", nil)
 
 	app := &application{
 		config: cfg,
 		logger: logger,
 	}
 
-	err := app.serve()
+	err = app.serve()
 	if err != nil {
 		logger.PrintFatal(err, nil)
 	}
@@ -77,19 +107,19 @@ func main() {
 
 }
 
-// func openDB(cfg config) (*sql.DB, error) {
-// 	db, err := sql.Open("postgres", cfg.db.dsn)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func openDB(cfg config) (*sql.DB, error) {
+	db, err := sql.Open("postgres", cfg.db.dsn)
+	if err != nil {
+		return nil, err
+	}
 
-// 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-// 	defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-// 	err = db.PingContext(ctx)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	err = db.PingContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-// 	return db, nil
-// }
+	return db, nil
+}

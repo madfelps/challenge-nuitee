@@ -1,0 +1,25 @@
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE hotels (
+    id SERIAL PRIMARY KEY,
+    external_id TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    city TEXT,
+    country TEXT,
+    last_known_price NUMERIC(10,2),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE users_favorites (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    hotel_id INTEGER NOT NULL REFERENCES hotels(id) ON DELETE CASCADE,
+    target_price NUMERIC(10,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (user_id, hotel_id)
+);

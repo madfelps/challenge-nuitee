@@ -9,3 +9,5 @@ require (
 	github.com/lib/pq v1.10.9
 	golang.org/x/time v0.14.0
 )
+
+require github.com/liteapi-travel/go-sdk/v3 v3.0.0-20240527122043-0d1a179b3b9c

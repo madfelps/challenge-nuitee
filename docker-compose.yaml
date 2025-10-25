@@ -1,0 +1,29 @@
+services:
+  api:
+    build: .
+    env_file:
+      - ./.env
+    ports:
+      - "4000:4000"
+    command: ./cmd/api/go-api
+    depends_on:
+      - db
+    networks:
+      - backend
+    restart: on-failure
+    volumes:
+      - postgres-db:/var/lib/postgresql/data
+
+  db:
+    image: postgres:16.2-alpine3.18
+    container_name: db-api
+    env_file:
+      - ./.env
+    networks:
+      - backend
+
+volumes:
+  postgres-db:
+
+networks:
+  backend:

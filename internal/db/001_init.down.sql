@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS users_favorites;
+DROP TABLE IF EXISTS hotels;
+DROP TABLE IF EXISTS users;

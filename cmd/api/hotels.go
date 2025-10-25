@@ -1,10 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"strconv"
+	"time"
 
+	"github.com/julienschmidt/httprouter"
 	liteapi "github.com/liteapi-travel/go-sdk/v3"
 )
 
@@ -25,6 +31,21 @@ type HotelsResponse struct {
 	Total  int     `json:"total"`
 	Offset int     `json:"offset"`
 	Limit  int     `json:"limit"`
+}
+
+type Occupancy struct {
+	Adults   int   `json:"adults"`
+	Children []int `json:"children"`
+}
+
+type MinRateSearchRequest struct {
+	HotelIds         []string    `json:"hotelIds"`
+	Checkin          string      `json:"checkin"`
+	Checkout         string      `json:"checkout"`
+	Occupancies      []Occupancy `json:"occupancies"`
+	Currency         string      `json:"currency"`
+	GuestNationality string      `json:"guestNationality"`
+	Timeout          int         `json:"timeout,omitempty"`
 }
 
 func (app *application) listHotelsHandler(w http.ResponseWriter, r *http.Request) {
@@ -152,4 +173,126 @@ func (app *application) listHotelsHandler(w http.ResponseWriter, r *http.Request
 		app.errorResponse(w, r, http.StatusInternalServerError, "failed to encode response")
 		return
 	}
+}
+
+func (app *application) getHotelPriceHandler(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+	hotelID := params.ByName("hotel_id")
+
+	if hotelID == "" {
+		app.errorResponse(w, r, http.StatusBadRequest, "hotel_id parameter is required")
+		return
+	}
+
+	apiKey := r.Header.Get("X-API-KEY")
+	if apiKey == "" {
+		apiKey = r.Header.Get("Authorization")
+		if apiKey == "" {
+			app.errorResponse(w, r, http.StatusUnauthorized, "API key is required")
+			return
+		}
+	}
+
+	hotelName := fmt.Sprintf("Hotel %s", hotelID)
+
+	checkIn := time.Now().AddDate(0, 0, 30).Format("2006-01-02")
+	checkOut := time.Now().AddDate(0, 0, 31).Format("2006-01-02")
+
+	minPrice, err := app.getMinPriceFromAPI(hotelID, checkIn, checkOut, apiKey)
+	if err != nil {
+		app.logError(r, err)
+		app.errorResponse(w, r, http.StatusInternalServerError, "failed to get hotel rates")
+		return
+	}
+	if minPrice <= 0 {
+		app.errorResponse(w, r, http.StatusNotFound, "no price data found for this hotel")
+		return
+	}
+
+	response := map[string]interface{}{
+		"hotel_id":   hotelID,
+		"hotel_name": hotelName,
+		"price":      minPrice,
+		"currency":   "USD",
+		"check_in":   checkIn,
+		"check_out":  checkOut,
+		"adults":     1,
+		"updated_at": time.Now().Format("2006-01-02T15:04:05Z"),
+	}
+
+	err = app.writeJSON(w, http.StatusOK, envelope{"data": response}, nil)
+	if err != nil {
+		app.logError(r, err)
+		app.errorResponse(w, r, http.StatusInternalServerError, "failed to encode response")
+		return
+	}
+}
+
+func (app *application) getMinPriceFromAPI(hotelID, checkIn, checkOut, apiKey string) (float64, error) {
+
+	requestData := MinRateSearchRequest{
+		HotelIds:         []string{hotelID},
+		Checkin:          checkIn,
+		Checkout:         checkOut,
+		Occupancies:      []Occupancy{{Adults: 1, Children: []int{}}},
+		Currency:         "USD",
+		GuestNationality: "US",
+		Timeout:          30,
+	}
+
+	jsonData, err := json.Marshal(requestData)
+	if err != nil {
+		return 0, fmt.Errorf("failed to marshal request: %v", err)
+	}
+
+	url := LITE_API_URL + "/hotels/min-rates"
+	req, err := http.NewRequest("POST", url, bytes.NewReader(jsonData))
+	if err != nil {
+		return 0, fmt.Errorf("failed to create request: %v", err)
+	}
+
+	req.Header.Add("accept", "application/json")
+	req.Header.Add("content-type", "application/json")
+	req.Header.Add("X-API-Key", apiKey)
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return 0, fmt.Errorf("failed to send request: %v", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		return 0, fmt.Errorf("API returned status %d", res.StatusCode)
+	}
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return 0, fmt.Errorf("failed to read response: %v", err)
+	}
+
+	var response map[string]interface{}
+	if err := json.Unmarshal(body, &response); err != nil {
+		return 0, fmt.Errorf("failed to parse response: %v", err)
+	}
+
+	minPrice := app.extractMinPriceFromAPIResponse(response)
+	return minPrice, nil
+}
+
+func (app *application) extractMinPriceFromAPIResponse(response map[string]interface{}) float64 {
+	minPrice := 0.0
+
+	if data, ok := response["data"].([]interface{}); ok {
+		for _, item := range data {
+			if itemData, ok := item.(map[string]interface{}); ok {
+				if price, ok := itemData["price"].(float64); ok {
+					if minPrice == 0 || price < minPrice {
+						minPrice = price
+					}
+				}
+			}
+		}
+	}
+
+	return minPrice
 }

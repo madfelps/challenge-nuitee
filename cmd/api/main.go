@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -17,6 +16,7 @@ import (
 )
 
 const version = "1.0.0"
+const LITE_API_URL = "https://api.liteapi.travel/v3.0"
 
 type config struct {
 	port int
@@ -31,18 +31,14 @@ type config struct {
 		enabled bool
 	}
 
-	smtp struct {
-		host     string
-		port     int
-		username string
-		password string
-		sender   string
-	}
+	apiKey string
 }
 
 type application struct {
-	config config
-	logger *jsonlog.Logger
+	config    config
+	logger    *jsonlog.Logger
+	apiClient *liteapi.APIClient
+	db        *sql.DB
 
 	wg sync.WaitGroup
 }
@@ -71,17 +67,10 @@ func main() {
 		log.Fatal("Environment variable LITE_API_KEY is not set")
 	}
 
+	cfg.apiKey = apiKey
+
 	configuration.AddDefaultHeader("X-API-KEY", apiKey)
 	apiClient := liteapi.NewAPIClient(configuration)
-
-	result, res, err := apiClient.StaticDataApi.GetCountries(context.Background()).Execute()
-
-	if err != nil {
-		fmt.Println("Error when calling GetCountries: ", err.Error())
-	}
-
-	fmt.Println("Response from GetCountries: ", res.Status)
-	fmt.Println("Result from GetCountries: ", result)
 
 	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 
@@ -94,9 +83,17 @@ func main() {
 	logger.PrintInfo("database connection pool established with success", nil)
 
 	app := &application{
-		config: cfg,
-		logger: logger,
+		config:    cfg,
+		logger:    logger,
+		apiClient: apiClient,
+		db:        db,
 	}
+
+	app.wg.Add(1)
+	go func() {
+		defer app.wg.Done()
+		app.StartPriceMonitor()
+	}()
 
 	err = app.serve()
 	if err != nil {

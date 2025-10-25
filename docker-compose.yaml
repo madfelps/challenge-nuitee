@@ -11,16 +11,21 @@ services:
     networks:
       - backend
     restart: on-failure
-    volumes:
-      - postgres-db:/var/lib/postgresql/data
 
   db:
     image: postgres:16.2-alpine3.18
     container_name: db-api
-    env_file:
-      - ./.env
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
     networks:
       - backend
+    volumes:
+      - postgres-db:/var/lib/postgresql/data
+      - ./internal/db/migrations:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
 
 volumes:
   postgres-db:

@@ -58,7 +58,7 @@ A simple CI pipeline was build using Github Actions with the following jobs:
 - Build: To package our application in a Docker image
 - Deploy: To push the generated image to Dockerhub
 
-![CI Pipeline workflow](docs/pipeline.png?raw=true "Pipeline workflow")
+![CI Pipeline workflow](docs/pipeline.jpg?raw=true "Pipeline workflow")
 
 ## API Endpoints
 

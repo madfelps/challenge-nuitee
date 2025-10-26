@@ -82,6 +82,8 @@ A simple CI pipeline was build using Github Actions with the following jobs:
 
 ## Demo
 
+![Nuitee Challenge Demo](docs/nuitee.gif?raw=true "Application Demo")
+
 ## How To Run
 
 ### Local Development with Docker
@@ -126,9 +128,8 @@ LITE_API_KEY=your_lite_api_key_here
 - **Password Reset Flow** - Implement secure password reset with email verification tokens
 - **Profile Management** - Allow users to update their profile information
 
-- **ArgoCD Integration** - Implement GitOps workflow with ArgoCD for automated deployments
-- **Rollback Capabilities** - Implement automated rollback mechanisms for failed deployments
+- **ArgoCD Integration** - Implement GitOps workflow with ArgoCD for automated deployments and rollbacks
 
-- **Amazon Integration** - EKS for Kubernetes deployment, RDS for managed PostgreSQL, ElastiCache for Redis caching, Load Balancer for traffic distribution, S3 for logs and backups, Secrets Manager for credential management
+- **Amazon Integration** - EKS for Kubernetes deployment, RDS for managed PostgreSQL, ElastiCache for Redis caching, Load Balancer for traffic distribution, S3 for logs and backups and Secrets Manager for credential management
 
 - **Observability** - Add custom metrics for API performance using Prometheus, create Grafana dashboards and implement alerts for system failures

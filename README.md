@@ -101,15 +101,22 @@ The API will be available at `http://localhost:4000`
 
 ### Environment Variables Configuration
 
-Before running the application, you need to configure the environment variables. I suggest to create a .env file with the following values:
+Before running the application, you need to configure the environment variables. Create a `.env` file in the project root with the following values:
 
+```bash
 DATABASE_USER=nuitee
 DATABASE_PASSWORD=1234
 DATABASE_NAME=nuitee
 DATABASE_DSN=postgresql://nuitee:1234@db:5432/nuitee?sslmode=disable
-LITE_API_KEY=XXXXXXX
 
-The LiteAPI API_KEY you can checkout in https://dashboard.liteapi.travel/apikeys by logging in your personal account. I suggest to use an API KEY for sandbox environment to run this project.
+LITE_API_KEY=your_lite_api_key_here
+```
+
+**Getting your LiteAPI Key:**
+
+1. Visit [LiteAPI Dashboard](https://dashboard.liteapi.travel/apikeys)
+2. Log in to your personal account
+3. Copy your API key and replace `your_lite_api_key_here` in the `.env` file I suggest to use an API KEY for sandbox environment to run this project.
 
 ## Improvement Ideas
 

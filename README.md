@@ -82,7 +82,7 @@ A simple CI pipeline was build using Github Actions with the following jobs:
 
 ## Demo
 
-![Nuitee Challenge Demo](docs/nuitee.gif?raw=true "Application Demo")
+![nuitee](https://github.com/user-attachments/assets/64290b85-7e54-4442-8fff-5a3630055805)
 
 ## How To Run
 

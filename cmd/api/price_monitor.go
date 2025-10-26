@@ -13,11 +13,8 @@ func (app *application) StartPriceMonitor() {
 
 	log.Println("price monitor started")
 
-	for {
-		select {
-		case <-ticker.C:
-			app.checkPrices()
-		}
+	for range ticker.C {
+		app.checkPrices()
 	}
 }
 

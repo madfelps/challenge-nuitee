@@ -47,7 +47,7 @@ The database schema consists of two tables that exposes price monitoring registe
 
 Concerning the **users** table, a user password is stored in format salt:hashPassword. This decision was made to prevent rainbow table attacks.
 
-![Database Schema Diagram](docs/tables.jpg "Database schema design")
+![Database Schema Diagram](docs/tables.jpg?raw=true "Database schema design")
 
 ### API Endpoints
 

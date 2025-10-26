@@ -116,7 +116,7 @@ LITE_API_KEY=your_lite_api_key_here
 
 1. Visit [LiteAPI Dashboard](https://dashboard.liteapi.travel/apikeys)
 2. Log in to your personal account
-3. Copy your API key and replace `your_lite_api_key_here` in the `.env` file I suggest to use an API KEY for sandbox environment to run this project.
+3. Copy your API key and replace `your_lite_api_key_here` in the `.env` file. Personally, I suggest you to use an API KEY for sandbox environment to run this project.
 
 ## Improvement Ideas
 

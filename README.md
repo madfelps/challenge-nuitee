@@ -58,7 +58,7 @@ A simple CI pipeline was build using Github Actions with the following jobs:
 - Build: To package our application in a Docker image
 - Deploy: To push the generated image to Dockerhub
 
-![CI Pipeline workflow](docs/pipeline.jpg?raw=true "Pipeline workflow")
+![CI Pipeline workflow](https://raw.githubusercontent.com/madfelps/challenge-nuitee/main/docs/pipeline.jpg "Pipeline workflow")
 
 ## API Endpoints
 
@@ -128,20 +128,13 @@ The API will be available at `http://localhost:4000`
 ## Improvement Ideas
 
 - **JWT-based Authentication** - Implement secure token-based authentication for user sessions
-- **Rate Limiting** - Add API rate limiting to prevent abuse and ensure fair usage
-- **Input Validation** - Strengthen input sanitization and validation middleware
 
 - **Password Reset Flow** - Implement secure password reset with email verification tokens
-- **Email Verification** - Add email confirmation for new user registrations
 - **Profile Management** - Allow users to update their profile information
-- **Account Deactivation** - Provide users with account deactivation/deletion options
 
 - **ArgoCD Integration** - Implement GitOps workflow with ArgoCD for automated deployments
 - **Rollback Capabilities** - Implement automated rollback mechanisms for failed deployments
 
 - **Amazon Integration** - EKS for Kubernetes deployment, RDS for managed PostgreSQL, ElastiCache for Redis caching, Load Balancer for traffic distribution, S3 for logs and backups, Secrets Manager for credential management
 
-- **Prometheus Metrics** - Add custom metrics for API performance, database queries, and business logic
-- **Grafana Dashboards** - Create comprehensive dashboards for system health and business metrics
-- **Alerting System** - Implement alerting for system failures, performance degradation, and price alerts
-- **Distributed Tracing** - Add request tracing across services for better debugging
+- **Observability** - Add custom metrics for API performance using Prometheus, create Grafana dashboards and implement alerts for system failures

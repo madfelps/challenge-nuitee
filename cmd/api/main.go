@@ -10,6 +10,7 @@ import (
 	"time"
 
 	liteapi "github.com/liteapi-travel/go-sdk/v3"
+	models "github.com/madfelps/challenge-nuitee/internal/data"
 	"github.com/madfelps/challenge-nuitee/internal/jsonlog"
 
 	_ "github.com/lib/pq"
@@ -39,6 +40,7 @@ type application struct {
 	logger    *jsonlog.Logger
 	apiClient *liteapi.APIClient
 	db        *sql.DB
+	models    models.Models
 
 	wg sync.WaitGroup
 }
@@ -87,6 +89,7 @@ func main() {
 		logger:    logger,
 		apiClient: apiClient,
 		db:        db,
+		models:    models.NewModels(db),
 	}
 
 	app.wg.Add(1)

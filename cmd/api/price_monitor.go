@@ -7,14 +7,6 @@ import (
 	"time"
 )
 
-type Favorite struct {
-	ID          int       `json:"id"`
-	UserID      int       `json:"user_id"`
-	HotelID     string    `json:"hotel_id"`
-	TargetPrice float64   `json:"target_price"`
-	CreatedAt   time.Time `json:"created_at"`
-}
-
 func (app *application) StartPriceMonitor() {
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
@@ -30,7 +22,7 @@ func (app *application) StartPriceMonitor() {
 }
 
 func (app *application) checkPrices() {
-	favorites, err := app.getAllFavorites()
+	favorites, err := app.models.Favorites.ListAllFavorites()
 	if err != nil {
 		log.Printf("error getting favorites: %v", err)
 		return
@@ -53,32 +45,6 @@ func (app *application) checkPrices() {
 				favorite.UserID, hotelName, currentPrice, favorite.TargetPrice)
 		}
 	}
-}
-
-func (app *application) getAllFavorites() ([]Favorite, error) {
-	query := `
-		SELECT id, user_id, hotel_id, target_price, created_at
-		FROM users_favorites
-		ORDER BY created_at DESC
-	`
-
-	rows, err := app.db.Query(query)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var favorites []Favorite
-	for rows.Next() {
-		var f Favorite
-		err := rows.Scan(&f.ID, &f.UserID, &f.HotelID, &f.TargetPrice, &f.CreatedAt)
-		if err != nil {
-			return nil, err
-		}
-		favorites = append(favorites, f)
-	}
-
-	return favorites, nil
 }
 
 func (app *application) getCurrentHotelPrice(hotelID string) (float64, string, error) {

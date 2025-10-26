@@ -3,13 +3,16 @@ package main
 import (
 	"crypto/rand"
 	"crypto/sha256"
-	"database/sql"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	models "github.com/madfelps/challenge-nuitee/internal/data"
+	"github.com/madfelps/challenge-nuitee/internal/validator"
 )
 
 type User struct {
@@ -30,71 +33,35 @@ type CreateUserResponse struct {
 }
 
 func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request) {
-
 	var req CreateUserRequest
+
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		app.errorResponse(w, r, http.StatusBadRequest, "invalid JSON")
 		return
 	}
 
-	if req.Name == "" {
-		app.errorResponse(w, r, http.StatusBadRequest, "name is required")
-		return
-	}
+	v := validator.New()
+	validateUser(v, &req)
+	ValidateEmail(v, req.Email)
+	ValidatePasswordPlaintext(v, req.Password)
 
-	if req.Email == "" {
-		app.errorResponse(w, r, http.StatusBadRequest, "email is required")
-		return
-	}
-
-	if req.Password == "" {
-		app.errorResponse(w, r, http.StatusBadRequest, "password is required")
-		return
-	}
-
-	if len(req.Password) < 6 {
-		app.errorResponse(w, r, http.StatusBadRequest, "password must be at least 6 characters")
-		return
-	}
-
-	if !isValidEmail(req.Email) {
-		app.errorResponse(w, r, http.StatusBadRequest, "invalid email format")
-		return
-	}
-
-	db, err := sql.Open("postgres", app.config.db.dsn)
-	if err != nil {
-		app.logError(r, err)
-		app.errorResponse(w, r, http.StatusInternalServerError, "database connection failed")
-		return
-	}
-	defer db.Close()
-
-	var existingID int
-	err = db.QueryRow("SELECT id FROM users WHERE email = $1", req.Email).Scan(&existingID)
-	if err != sql.ErrNoRows {
-		if err != nil {
-			app.logError(r, err)
-			app.errorResponse(w, r, http.StatusInternalServerError, "database error")
-			return
-		}
-		app.errorResponse(w, r, http.StatusConflict, "email already exists")
+	if !v.Valid() {
+		app.errorResponse(w, r, http.StatusUnprocessableEntity, v.Errors)
 		return
 	}
 
 	passwordHash := hashPassword(req.Password)
 
-	var userID int
-	var createdAt time.Time
-	err = db.QueryRow(
-		"INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, created_at",
-		req.Name, req.Email, passwordHash,
-	).Scan(&userID, &createdAt)
-
+	userID, err := app.models.Users.Insert(req.Name, req.Email, passwordHash)
 	if err != nil {
-		app.logError(r, err)
-		app.errorResponse(w, r, http.StatusInternalServerError, "failed to create user")
+		switch {
+		case errors.Is(err, models.ErrDuplicateEmail):
+			app.errorResponse(w, r, http.StatusConflict, "email already exists")
+		default:
+			app.logError(r, err)
+			app.errorResponse(w, r, http.StatusInternalServerError, "failed to create user")
+		}
 		return
 	}
 
@@ -102,7 +69,7 @@ func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request
 		ID:        userID,
 		Name:      req.Name,
 		Email:     req.Email,
-		CreatedAt: createdAt,
+		CreatedAt: time.Now(),
 	}
 
 	response := CreateUserResponse{
@@ -118,7 +85,6 @@ func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (app *application) listUsersHandler(w http.ResponseWriter, r *http.Request) {
-
 	offsetStr := r.URL.Query().Get("offset")
 	limitStr := r.URL.Query().Get("limit")
 
@@ -143,39 +109,7 @@ func (app *application) listUsersHandler(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	db, err := sql.Open("postgres", app.config.db.dsn)
-	if err != nil {
-		app.logError(r, err)
-		app.errorResponse(w, r, http.StatusInternalServerError, "database connection failed")
-		return
-	}
-	defer db.Close()
-
-	rows, err := db.Query(
-		"SELECT id, name, email, created_at FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2",
-		limit, offset,
-	)
-	if err != nil {
-		app.logError(r, err)
-		app.errorResponse(w, r, http.StatusInternalServerError, "database error")
-		return
-	}
-	defer rows.Close()
-
-	var users []User
-	for rows.Next() {
-		var user User
-		err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.CreatedAt)
-		if err != nil {
-			app.logError(r, err)
-			app.errorResponse(w, r, http.StatusInternalServerError, "database error")
-			return
-		}
-		users = append(users, user)
-	}
-
-	var total int
-	err = db.QueryRow("SELECT COUNT(*) FROM users").Scan(&total)
+	users, total, err := app.models.Users.List(limit, offset)
 	if err != nil {
 		app.logError(r, err)
 		app.errorResponse(w, r, http.StatusInternalServerError, "database error")
@@ -195,30 +129,6 @@ func (app *application) listUsersHandler(w http.ResponseWriter, r *http.Request)
 		app.errorResponse(w, r, http.StatusInternalServerError, "failed to encode response")
 		return
 	}
-}
-
-func isValidEmail(email string) bool {
-
-	if len(email) < 5 {
-		return false
-	}
-
-	hasAt := false
-	hasDot := false
-
-	for i, char := range email {
-		if char == '@' {
-			if hasAt || i == 0 || i == len(email)-1 {
-				return false
-			}
-			hasAt = true
-		}
-		if char == '.' && hasAt {
-			hasDot = true
-		}
-	}
-
-	return hasAt && hasDot
 }
 
 func hashPassword(password string) string {
@@ -251,4 +161,22 @@ func verifyPassword(password, storedHash string) bool {
 	hashStr := hex.EncodeToString(hash[:])
 
 	return hashStr == parts[1]
+}
+
+func validateUser(v *validator.Validator, user *CreateUserRequest) {
+
+	v.Check(user.Name != "", "name", "must be provided")
+	v.Check(len(user.Name) <= 100, "name", "must not be more than 100 characters long")
+
+}
+
+func ValidateEmail(v *validator.Validator, email string) {
+	v.Check(email != "", "email", "must be provided")
+	v.Check(validator.Matches(email, validator.EmailRX), "email", "must be a valid email address")
+}
+
+func ValidatePasswordPlaintext(v *validator.Validator, password string) {
+	v.Check(password != "", "password", "must be provided")
+	v.Check(len(password) >= 8, "password", "must be at least 8 bytes long")
+	v.Check(len(password) <= 72, "password", "must not be more than 72 bytes long")
 }

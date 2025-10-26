@@ -49,23 +49,34 @@ Concerning the **users** table, a user password is stored in format salt:hashPas
 
 ![Database Schema Diagram](docs/tables.jpg?raw=true "Database schema design")
 
-### API Endpoints
+## CI Pipeline
 
-#### User Management
+A simple CI pipeline was build using Github Actions with the following jobs:
+
+- Git leaks: In order to check for leaked secrets, such as API KEYS
+- Test: To run our unit tests (and integration tests in the future)
+- Build: To package our application in a Docker image
+- Deploy: To push the generated image to Dockerhub
+
+![CI Pipeline workflow](docs/pipeline.png?raw=true "Pipeline workflow")
+
+## API Endpoints
+
+### User Management
 
 - `POST /v1/users` - Create new user
 - `GET /v1/users` - List users (with pagination)
 
-#### Hotel Management
+### Hotel Management
 
 - `GET /v1/hotels/:hotel_id` - Get hotel price information
 
-#### Favorites Management
+### Favorites Management
 
 - `POST /v1/users/:user_id/favorites` - Add hotel to favorites
 - `GET /v1/users/:user_id/favorites` - List user favorites
 
-#### System
+### System
 
 - `GET /v1/healthcheck` - Health check endpoint
 

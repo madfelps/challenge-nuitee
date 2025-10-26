@@ -72,7 +72,6 @@ func (app *application) getCurrentHotelPrice(hotelID string) (float64, string, e
 		return 0, hotelName, fmt.Errorf("failed to get rates: %v", err)
 	}
 	if minPrice > 0 {
-		log.Printf("found real price for %s: $%.2f", hotelName, minPrice)
 		return minPrice, hotelName, nil
 	}
 

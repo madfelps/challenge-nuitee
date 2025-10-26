@@ -6,16 +6,6 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE TABLE hotels (
-    id SERIAL PRIMARY KEY,
-    external_id TEXT UNIQUE NOT NULL,
-    name TEXT NOT NULL,
-    city TEXT,
-    country TEXT,
-    last_known_price NUMERIC(10,2),
-    updated_at TIMESTAMP DEFAULT NOW()
-);
-
 CREATE TABLE users_favorites (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,

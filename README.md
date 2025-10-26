@@ -99,35 +99,22 @@ A simple CI pipeline was build using Github Actions with the following jobs:
 
 The API will be available at `http://localhost:4000`
 
-### Kubernetes Deployment
+### Environment Variables Configuration
 
-1. **Create Kind cluster**
+Before running the application, you need to configure the environment variables. I suggest to create a .env file with the following values:
 
-   ```bash
-   make cluster
-   ```
+DATABASE_USER=nuitee
+DATABASE_PASSWORD=1234
+DATABASE_NAME=nuitee
+DATABASE_DSN=postgresql://nuitee:1234@db:5432/nuitee?sslmode=disable
+LITE_API_KEY=XXXXXXX
 
-2. **Deploy application to Kubernetes**
-
-   ```bash
-   make app
-   ```
-
-3. **Check deployment status**
-
-   ```bash
-   kubectl get pods -n nuitee-challenge
-   kubectl get services -n nuitee-challenge
-   ```
-
-4. **Clean up**
-   ```bash
-   make destroy
-   ```
+The LiteAPI API_KEY you can checkout in https://dashboard.liteapi.travel/apikeys by logging in your personal account. I suggest to use an API KEY for sandbox environment to run this project.
 
 ## Improvement Ideas
 
 - **JWT-based Authentication** - Implement secure token-based authentication for user sessions
+- **Memory-cache usage** - Implement cache in memory (such as Redis) to improve application performance
 
 - **Password Reset Flow** - Implement secure password reset with email verification tokens
 - **Profile Management** - Allow users to update their profile information

@@ -19,7 +19,7 @@ The system consists of a Go-based API server, PostgreSQL database, and a backgro
 
 ### Prerequisites
 
-- Go 1.21 or higher
+- Go 1.24 
 - Docker and Docker Compose
 - Kind (Kubernetes in Docker)
 - Terraform
@@ -30,7 +30,7 @@ The system consists of a Go-based API server, PostgreSQL database, and a backgro
 
 #### Backend
 
-- **Go 1.21+** - High performance, excellent concurrency support for price monitoring, and strong ecosystem for web APIs
+- **Go 1.24.0** - High performance, excellent concurrency support for price monitoring, and strong ecosystem for web APIs
 - **PostgreSQL 16** - ACID guarantees for user data
 - **DBeaver** - Local development and facilitate schema visualization
 - **Docker & Docker Compose** - Development environment using containers

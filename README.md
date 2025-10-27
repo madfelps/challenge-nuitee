@@ -86,21 +86,6 @@ A simple CI pipeline was build using Github Actions with the following jobs:
 
 ## How To Run
 
-### Local Development with Docker
-
-1. **Start the application**
-
-   ```bash
-   make run
-   ```
-
-2. **Stop the application**
-   ```bash
-   make down
-   ```
-
-The API will be available at `http://localhost:4000`
-
 ### Environment Variables Configuration
 
 Before running the application, you need to configure the environment variables. Create a `.env` file in the project root with the following values:
@@ -120,6 +105,35 @@ LITE_API_KEY=your_lite_api_key_here
 2. Log in to your personal account
 3. Copy your API key and replace `your_lite_api_key_here` in the `.env` file. Personally, I suggest you to use an API KEY for sandbox environment to run this project.
 
+### Local Development with Docker
+
+1. **Start the application**
+
+   ```bash
+   make run
+   ```
+
+2. **Stop the application**
+   ```bash
+   make down
+   ```
+
+The API will be available at `http://localhost:4000`
+
+### Running in Kubernetes (Kind)
+
+In case you want to start this project in a Kubernetes environment, run:
+
+1. **Launch the cluster**
+
+   ```bash
+   make cluster
+   ```
+2. **After finished, run this to destroy the cluster:**
+   ```bash
+   make destroy
+   ```
+   
 ## Improvement Ideas
 
 - **JWT-based Authentication** - Implement secure token-based authentication for user sessions

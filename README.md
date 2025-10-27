@@ -47,7 +47,7 @@ The database schema consists of two tables that exposes price monitoring registe
 
 Concerning the **users** table, a user password is stored in format salt:hashPassword. This decision was made to prevent rainbow table attacks.
 
-![Database Schema Diagram](docs/tables.jpg?raw=true "Database schema design")
+![Database Schema Diagram](https://github.com/user-attachments/assets/4e005aa6-7049-46da-8dcb-4e3fe0fcb40b)
 
 ## CI Pipeline
 
@@ -58,7 +58,7 @@ A simple CI pipeline was build using Github Actions with the following jobs:
 - Build: To package our application in a Docker image
 - Deploy: To push the generated image to Dockerhub
 
-![CI Pipeline workflow](https://raw.githubusercontent.com/madfelps/challenge-nuitee/main/docs/pipeline.jpg "Pipeline workflow")
+![CI Pipeline workflow](https://github.com/user-attachments/assets/a922fe92-bcc9-42d9-8f0a-5d8037286741)
 
 ## API Endpoints
 

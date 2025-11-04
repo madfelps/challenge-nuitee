@@ -52,15 +52,3 @@ variable "lite_api_key" {
   sensitive   = true
 }
 
-variable "mailtrap_username" {
-  description = "Mailtrap SMTP username"
-  type        = string
-  sensitive   = true
-}
-
-variable "mailtrap_password" {
-  description = "Mailtrap SMTP password"
-  type        = string
-  sensitive   = true
-}
-

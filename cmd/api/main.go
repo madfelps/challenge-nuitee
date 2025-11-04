@@ -12,7 +12,6 @@ import (
 	liteapi "github.com/liteapi-travel/go-sdk/v3"
 	models "github.com/madfelps/challenge-nuitee/internal/data"
 	"github.com/madfelps/challenge-nuitee/internal/jsonlog"
-	"github.com/wneessen/go-mail"
 
 	_ "github.com/lib/pq"
 )
@@ -33,9 +32,7 @@ type config struct {
 		enabled bool
 	}
 
-	apiKey        string
-	emailUser     string
-	emailPassword string
+	apiKey string
 }
 
 type application struct {
@@ -44,7 +41,6 @@ type application struct {
 	apiClient *liteapi.APIClient
 	db        *sql.DB
 	models    models.Models
-	email     *mail.Client
 
 	wg sync.WaitGroup
 }
@@ -68,8 +64,6 @@ func main() {
 	configuration := liteapi.NewConfiguration()
 
 	apiKey := os.Getenv("LITE_API_KEY")
-	emailUser := os.Getenv("MAILTRAP_USERNAME")
-	emailPassword := os.Getenv("MAILTRAP_PASSWORD")
 
 	if apiKey == "" {
 		log.Fatal("Environment variable LITE_API_KEY is not set")
@@ -90,20 +84,12 @@ func main() {
 
 	logger.PrintInfo("database connection pool established with success", nil)
 
-	mailClient, err := mail.NewClient("smtp.mailtrap.io",
-		mail.WithPort(25), mail.WithSMTPAuth(mail.SMTPAuthPlain),
-		mail.WithUsername(emailUser), mail.WithPassword(emailPassword))
-	if err != nil {
-		log.Fatalf("failed to create mail client: %s", err)
-	}
-
 	app := &application{
 		config:    cfg,
 		logger:    logger,
 		apiClient: apiClient,
 		db:        db,
 		models:    models.NewModels(db),
-		email:     mailClient,
 	}
 
 	app.wg.Add(1)

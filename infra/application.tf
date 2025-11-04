@@ -39,8 +39,6 @@ resource "kubernetes_secret" "api_secrets" {
     DATABASE_PASSWORD = var.database_password
     DATABASE_DSN      = "postgres://${var.database_user}:${var.database_password}@postgres-service:5432/${var.database_name}?sslmode=disable"
     LITE_API_KEY      = var.lite_api_key
-    MAILTRAP_USERNAME = var.mailtrap_username
-    MAILTRAP_PASSWORD = var.mailtrap_password
   }
 
   type = "Opaque"

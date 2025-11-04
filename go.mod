@@ -11,8 +11,3 @@ require (
 )
 
 require github.com/liteapi-travel/go-sdk/v3 v3.0.0-20240527122043-0d1a179b3b9c
-
-require (
-	github.com/wneessen/go-mail v0.7.2 // indirect
-	golang.org/x/text v0.29.0 // indirect
-)

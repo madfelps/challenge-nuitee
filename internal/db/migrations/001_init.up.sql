@@ -12,5 +12,6 @@ CREATE TABLE users_favorites (
     hotel_id TEXT NOT NULL,
     target_price NUMERIC(10,2) NOT NULL,
     created_at TIMESTAMP DEFAULT NOW(),
+    was_notified BOOLEAN NOT NULL DEFAULT FALSE,
     UNIQUE (user_id, hotel_id)
 );

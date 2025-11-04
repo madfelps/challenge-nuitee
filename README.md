@@ -64,16 +64,49 @@ A simple CI pipeline was build using Github Actions with the following jobs:
 
 ### User Management
 
-- `POST /v1/users` - Create new user
+- `POST /v1/users` - Create new user  
+  Parameters (JSON or form):
+  - name (string, required)
+  - email (string, required, unique)
+  - password (string, required)  
+  Example:
+  ```
+  http POST localhost:4000/v1/users name="Jhon Doe" email="jhon@gmail.com" password="12345678"
+  ```
+
 - `GET /v1/users` - List users (with pagination)
 
 ### Hotel Management
 
-- `GET /v1/hotels/:hotel_id` - Get hotel price information
+- `GET /v1/hotels/:hotel_id` - Get hotel price information  
+  Query parameters / filters supported:
+  - hotel_id (string) — e.g. "lp19c46"
+  Header:
+  - `X-API-KEY: <LITE_API_KEY>` (required for LiteAPI calls)  
+  Example (HTTPie):
+  ```
+  http GET localhost:4000/v1/hotels/lp19c46 X-API-KEY:$LITE_API_KEY
+  ```
+
+- `GET /v1/hotels` - Get hotels information  
+  Header:
+  - `X-API-KEY: <LITE_API_KEY>` (required for LiteAPI calls)  
+  Example (HTTPie):
+  ```
+  http GET localhost:4000/v1/hotels X-API-KEY:$LITE_API_KEY
+  ```
 
 ### Favorites Management
 
-- `POST /v1/users/:user_id/favorites` - Add hotel to favorites
+- `POST /v1/users/:user_id/favorites` - Add hotel to favorites  
+  Parameters (JSON or form):
+  - hotel_id (string, required) — LiteAPI hotel identifier (e.g. "lp19c46")
+  - target_price (number, required) — price threshold to trigger alerts  
+  Example:
+  ```
+  http POST localhost:4000/v1/favorites/1 hotel_id=lp19c46 target_price:=400
+  ```
+
 - `GET /v1/users/:user_id/favorites` - List user favorites
 
 ### System
@@ -97,6 +130,8 @@ DATABASE_NAME=nuitee
 DATABASE_DSN=postgresql://nuitee:1234@db:5432/nuitee?sslmode=disable
 
 LITE_API_KEY=your_lite_api_key_here
+MAILTRAP_USERNAME=your_mailtrap_username_here
+MAILTRAP_PASSWORD=your_mailtrap_password_here
 ```
 
 **Getting your LiteAPI Key:**

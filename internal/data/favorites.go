@@ -12,6 +12,7 @@ type Favorite struct {
 	HotelID     string    `json:"hotel_id"`
 	TargetPrice float64   `json:"target_price"`
 	CreatedAt   time.Time `json:"created_at"`
+	WasNotified bool      `json:"was_notified"`
 }
 
 type FavoriteModel struct {
@@ -20,7 +21,7 @@ type FavoriteModel struct {
 
 func (m FavoriteModel) ListAllFavorites() ([]Favorite, error) {
 	query := `
-		SELECT id, user_id, hotel_id, target_price, created_at
+		SELECT id, user_id, hotel_id, target_price, created_at, was_notified
 		FROM users_favorites
 		ORDER BY created_at DESC
 	`
@@ -37,7 +38,7 @@ func (m FavoriteModel) ListAllFavorites() ([]Favorite, error) {
 	var favorites []Favorite
 	for rows.Next() {
 		var f Favorite
-		err := rows.Scan(&f.ID, &f.UserID, &f.HotelID, &f.TargetPrice, &f.CreatedAt)
+		err := rows.Scan(&f.ID, &f.UserID, &f.HotelID, &f.TargetPrice, &f.CreatedAt, &f.WasNotified)
 		if err != nil {
 			return nil, err
 		}
@@ -49,4 +50,18 @@ func (m FavoriteModel) ListAllFavorites() ([]Favorite, error) {
 	}
 
 	return favorites, nil
+}
+
+func (m FavoriteModel) MarkAsNotified(favoriteID int) error {
+	query := `
+		UPDATE users_favorites
+		SET was_notified = TRUE
+		WHERE id = $1
+	`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	_, err := m.DB.ExecContext(ctx, query, favoriteID)
+	return err
 }

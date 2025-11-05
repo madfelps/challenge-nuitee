@@ -19,7 +19,7 @@ The system consists of a Go-based API server, PostgreSQL database, and a backgro
 
 ### Prerequisites
 
-- Go 1.24 
+- Go 1.24
 - Docker and Docker Compose
 - Kind (Kubernetes in Docker)
 - Terraform
@@ -66,10 +66,12 @@ A simple CI pipeline was build using Github Actions with the following jobs:
 
 - `POST /v1/users` - Create new user  
   Parameters (JSON or form):
+
   - name (string, required)
   - email (string, required, unique)
   - password (string, required)  
-  Example:
+    Example:
+
   ```
   http POST localhost:4000/v1/users name="Jhon Doe" email="jhon@gmail.com" password="12345678"
   ```
@@ -80,10 +82,12 @@ A simple CI pipeline was build using Github Actions with the following jobs:
 
 - `GET /v1/hotels/:hotel_id` - Get hotel price information  
   Query parameters / filters supported:
+
   - hotel_id (string) — e.g. "lp19c46"
-  Header:
+    Header:
   - `X-API-KEY: <LITE_API_KEY>` (required for LiteAPI calls)  
-  Example (HTTPie):
+    Example (HTTPie):
+
   ```
   http GET localhost:4000/v1/hotels/lp19c46 X-API-KEY:$LITE_API_KEY
   ```
@@ -91,7 +95,7 @@ A simple CI pipeline was build using Github Actions with the following jobs:
 - `GET /v1/hotels` - Get hotels information  
   Header:
   - `X-API-KEY: <LITE_API_KEY>` (required for LiteAPI calls)  
-  Example (HTTPie):
+    Example (HTTPie):
   ```
   http GET localhost:4000/v1/hotels X-API-KEY:$LITE_API_KEY
   ```
@@ -100,9 +104,11 @@ A simple CI pipeline was build using Github Actions with the following jobs:
 
 - `POST /v1/users/:user_id/favorites` - Add hotel to favorites  
   Parameters (JSON or form):
+
   - hotel_id (string, required) — LiteAPI hotel identifier (e.g. "lp19c46")
   - target_price (number, required) — price threshold to trigger alerts  
-  Example:
+    Example:
+
   ```
   http POST localhost:4000/v1/favorites/1 hotel_id=lp19c46 target_price:=400
   ```
@@ -157,18 +163,31 @@ The API will be available at `http://localhost:4000`
 
 ### Running in Kubernetes (Kind)
 
-In case you want to start this project in a Kubernetes environment, run:
+In case you want to start this project in a Kubernetes environment, set your credentials on infra/manifests/secret-api.yaml and run:
 
 1. **Launch the cluster**
 
    ```bash
    make cluster
    ```
-2. **After finished, run this to destroy the cluster:**
+
+2. **Apply the manifests**
+
+   ```bash
+   make apply
+   ```
+
+3. **Expose the services**
+
+   ```bash
+   make expose
+   ```
+
+4. **After finished, run this to destroy the cluster:**
    ```bash
    make destroy
    ```
-   
+
 ## Improvement Ideas
 
 - **JWT-based Authentication** - Implement secure token-based authentication for user sessions

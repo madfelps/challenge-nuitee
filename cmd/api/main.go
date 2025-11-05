@@ -68,8 +68,8 @@ func main() {
 	configuration := liteapi.NewConfiguration()
 
 	apiKey := os.Getenv("LITE_API_KEY")
-	emailUser := os.Getenv("MAILTRAP_USERNAME")
-	emailPassword := os.Getenv("MAILTRAP_PASSWORD")
+	cfg.emailUser = os.Getenv("MAILTRAP_USERNAME")
+	cfg.emailPassword = os.Getenv("MAILTRAP_PASSWORD")
 
 	if apiKey == "" {
 		log.Fatal("Environment variable LITE_API_KEY is not set")
@@ -91,10 +91,11 @@ func main() {
 	logger.PrintInfo("database connection pool established with success", nil)
 
 	mailClient, err := mail.NewClient("smtp.mailtrap.io",
-		mail.WithPort(25), mail.WithSMTPAuth(mail.SMTPAuthPlain),
-		mail.WithUsername(emailUser), mail.WithPassword(emailPassword))
+		mail.WithPort(2525), mail.WithSMTPAuth(mail.SMTPAuthPlain),
+		mail.WithUsername(cfg.emailUser), mail.WithPassword(cfg.emailPassword))
 	if err != nil {
-		log.Fatalf("failed to create mail client: %s", err)
+		logger.PrintError(err, nil)
+		return
 	}
 
 	app := &application{

@@ -13,13 +13,13 @@ variable "api_replicas" {
 variable "database_name" {
   description = "PostgreSQL database name"
   type        = string
-  default     = "greenlight"
+  default     = "nuitee"
 }
 
 variable "database_user" {
   description = "PostgreSQL database user"
   type        = string
-  default     = "greenlight"
+  default     = "nuitee"
 }
 
 variable "database_password" {

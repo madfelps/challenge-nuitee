@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+	"strconv"
 	"time"
 
 	"github.com/wneessen/go-mail"
@@ -13,7 +13,7 @@ func (app *application) StartPriceMonitor() {
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
 
-	log.Println("price monitor started")
+	app.logger.PrintInfo("price monitor started", nil)
 
 	for range ticker.C {
 		app.reconcilePriceMonitor()
@@ -23,7 +23,7 @@ func (app *application) StartPriceMonitor() {
 func (app *application) reconcilePriceMonitor() {
 	favorites, err := app.models.Favorites.ListAllFavorites()
 	if err != nil {
-		log.Printf("error getting favorites: %v", err)
+		app.logger.PrintError(err, nil)
 		return
 	}
 
@@ -33,28 +33,47 @@ func (app *application) reconcilePriceMonitor() {
 			continue
 		}
 
-		log.Printf("checking price for hotel %s (User: %d, Target: $%.2f)",
-			favorite.HotelID, favorite.UserID, favorite.TargetPrice)
+		app.logger.PrintInfo("checking price for hotel", map[string]string{
+			"hotel_id":     favorite.HotelID,
+			"user_id":      strconv.Itoa(favorite.UserID),
+			"target_price": fmt.Sprintf("%.2f", favorite.TargetPrice),
+		})
 
 		currentPrice, hotelName, err := app.getCurrentHotelPrice(favorite.HotelID)
 		if err != nil {
-			log.Printf("error getting price for hotel %s: %v", favorite.HotelID, err)
+			app.logger.PrintError(err, map[string]string{
+				"hotel_id": favorite.HotelID,
+			})
 			continue
 		}
 
-		log.Printf("found price for %s: $%.2f", hotelName, currentPrice)
+		app.logger.PrintInfo("found price for hotel", map[string]string{
+			"hotel_id":      favorite.HotelID,
+			"hotel_name":    hotelName,
+			"current_price": fmt.Sprintf("%.2f", currentPrice),
+		})
 
 		if currentPrice > favorite.TargetPrice {
 			continue
 		}
 
-		fmt.Printf("ALERT: User %d - Hotel %s - Current price $%.2f is lower than target $%.2f\n",
-			favorite.UserID, hotelName, currentPrice, favorite.TargetPrice)
-		msg := createNotificationMessage("from@example.com", "to@example.com", fmt.Sprintf("$%.2f", favorite.TargetPrice), fmt.Sprintf("$%.2f", currentPrice))
+		app.logger.PrintInfo("alerting user", map[string]string{
+			"user_id":       strconv.Itoa(favorite.UserID),
+			"hotel_id":      favorite.HotelID,
+			"hotel_name":    hotelName,
+			"current_price": fmt.Sprintf("%.2f", currentPrice),
+			"target_price":  fmt.Sprintf("%.2f", favorite.TargetPrice),
+		})
+		msg := app.createNotificationMessage("from@example.com", "to@example.com", fmt.Sprintf("$%.2f", favorite.TargetPrice), fmt.Sprintf("$%.2f", currentPrice))
+		app.logger.PrintInfo("sending email for user", map[string]string{
+			"user_id": strconv.Itoa(favorite.UserID),
+		})
 		app.sendEmail(msg)
 		err = app.models.Favorites.MarkAsNotified(favorite.ID)
 		if err != nil {
-			log.Printf("error marking favorite %d as notified: %v", favorite.ID, err)
+			app.logger.PrintError(err, map[string]string{
+				"favorite_id": strconv.Itoa(favorite.ID),
+			})
 		}
 
 	}
@@ -84,24 +103,32 @@ func (app *application) getCurrentHotelPrice(hotelID string) (float64, string, e
 
 	minPrice, err := app.getMinPriceFromAPI(hotelID, checkIn, checkOut, app.config.apiKey)
 	if err != nil {
-		log.Printf("error getting min rates for hotel %s: %v", hotelID, err)
+		app.logger.PrintError(err, map[string]string{
+			"hotel_id": hotelID,
+		})
 		return 0, hotelName, fmt.Errorf("failed to get rates: %v", err)
 	}
 	if minPrice > 0 {
 		return minPrice, hotelName, nil
 	}
 
-	log.Printf("no price data found for hotel %s", hotelID)
+	app.logger.PrintInfo("no price data found for hotel", map[string]string{
+		"hotel_id": hotelID,
+	})
 	return 0, hotelName, fmt.Errorf("no price data found")
 }
 
-func createNotificationMessage(from, to, targetPrice, currentPrice string) *mail.Msg {
+func (app *application) createNotificationMessage(from, to, targetPrice, currentPrice string) *mail.Msg {
 	msg := mail.NewMsg()
 	if err := msg.From(from); err != nil {
-		log.Fatalf("failed to set From address: %s", err)
+		app.logger.PrintError(err, map[string]string{
+			"from": from,
+		})
 	}
 	if err := msg.To(to); err != nil {
-		log.Fatalf("failed to set To address: %s", err)
+		app.logger.PrintError(err, map[string]string{
+			"to": to,
+		})
 	}
 	msg.Subject("ALERT OF PRICE DROP!")
 	body := fmt.Sprintf("Hey!\nThe price for one of your favorite hotels has dropped below your target price!\nYour target price is %s and the current price is %s.\nBook now!", targetPrice, currentPrice)
@@ -111,8 +138,8 @@ func createNotificationMessage(from, to, targetPrice, currentPrice string) *mail
 
 func (app *application) sendEmail(msg *mail.Msg) {
 	if err := app.email.DialAndSend(msg); err != nil {
-		log.Printf("failed to send email: %s", err)
+		app.logger.PrintError(err, nil)
 		return
 	}
-	log.Println("notification email sent successfully")
+	app.logger.PrintInfo("notification email sent successfully", nil)
 }
